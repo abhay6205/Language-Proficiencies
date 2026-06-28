@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: polyglot_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: polyglot_pro
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - polyglot_network
+
+  backend:
+    build: ./backend
+    container_name: polyglot_backend
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=polyglot_pro
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - NODE_ENV=development
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - polyglot_network
+
+  frontend:
+    build: ./frontend
+    container_name: polyglot_frontend
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - polyglot_network
+
+volumes:
+  postgres_data:
+
+networks:
+  polyglot_network:
+    driver: bridge
